@@ -1,0 +1,55 @@
+﻿from pre_proccess_tweet import tweet_pre_process_with__text
+import pytz
+local_tz = pytz.timezone('America/Sao_Paulo')
+from datetime import datetime, timedelta
+from email.utils import parsedate_tz
+def to_datetime(datestring):
+    time_tuple = parsedate_tz(datestring.strip())
+    dt = datetime(*time_tuple[:6])
+    return dt - timedelta(seconds=time_tuple[-1])
+
+class TweetSolrDocument():
+    def __init__(self, t, update):
+        self.id = t['id'] # twitter_id
+        self.hashtags =[]
+        for hash in t['entities']['hashtags']:
+            self.hashtags.append(hash['text'])
+        self.reply_to_user_id = t['in_reply_to_user_id']
+        self.reply_to_screen_name= t['in_reply_to_screen_name']
+        self.reply_to_status_id= t['in_reply_to_status_id']
+        self.location = None
+        self.location_0_coordinate = None
+        self.location_1_coordinate = None
+        if t['coordinates'] != None:
+            self.location= str(t['coordinates']['coordinates'][1]) + "," + str(t['coordinates']['coordinates'][0])
+            self.location_0_coordinate = t['coordinates']['coordinates'][0]
+            self.location_1_coordinate = t['coordinates']['coordinates'][1]
+        self.city = t['user']['location']
+        self.number_of_retweets= t['retweet_count']
+        self.source= t['source']
+        self.raw_text = t['text']
+        self.text=tweet_pre_process_with__text(t['text'])
+        self.sender_user_id= t['user']['id']
+        self.sender_screen_name= t['user']['screen_name']
+        self.sender_name= t['user']['name']
+        self.is_favorited= t['favorited']
+        self.is_retweet= t['retweeted']
+        self.url_entities_list=[]
+        self.url_user_image = t['user']['profile_image_url']
+        self.user_followers_count = t['user']['followers_count'] #The number of followers the author of a Tweet has on Twitter.
+        self.user_statuses_count = t['user']['statuses_count'] #The total number of Tweets and Retweets a Twitter user has posted.
+        self.user_listed_count = t['user']['listed_count'] #The number of Twitter lists on which the author of a Tweet appears.
+        for url in t['entities']['urls']:
+            self.url_entities_list.append(url['url'])
+        self.user_mention_list = []
+        self.user_mention_screen_name= []
+        for user in t['entities']['user_mentions']:
+            self.user_mention_list.append(user["id"])
+            self.user_mention_screen_name.append(user["screen_name"])
+
+        self.creation_date= local_tz.localize(to_datetime(t['created_at']))
+        # calculando o reach-alcance do twitter
+        self.reach = -1
+        self.sentiment = 0
+        if t['cd_geocodd']:
+            self.cd_geocodd = t['cd_geocodd']

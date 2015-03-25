@@ -1,0 +1,73 @@
+#-------------------------------------------------------------------------------
+# Name:        module1
+# Purpose:
+#
+# Author:      llima
+#
+# Created:     23/02/2015
+# Copyright:   (c) llima 2015
+# Licence:     <your licence>
+#-------------------------------------------------------------------------------
+
+from bottle import route, run, request
+import unirest
+import json
+from pprint import pprint
+
+@route('/Graph/CreateFriendShip', method='POST')
+def CreateFriendShipGraph():
+    try:
+        jsonRetorno = {}
+    except Exception as e:
+        pprint(e)
+        jsonRetorno = '{"status":"failed","descricao":'+json.dumps(e)+'}'
+    return jsonRetorno
+
+@route('/Graph/CreateNetworkOfTerms', method='POST')
+def CreateNetworkOfTerms():
+    try:
+
+        jsonRetorno = {}
+    except Exception as e:
+        pprint(e)
+        jsonRetorno = '{"status":"failed","descricao":'+json.dumps(e)+'}'
+    return jsonRetorno
+
+@route('/Graph/CreateRetweetsRelationships', method='POST')
+def CreateNetworkOfTerms():
+    try:
+        jsonRetorno = {}
+    except Exception as e:
+        pprint(e)
+        jsonRetorno = '{"status":"failed","descricao":'+json.dumps(e)+'}'
+    return jsonRetorno
+
+@route('User/Info/:id', method='GET')
+def GetUserInfo(id):
+    try:
+        jsonRetorno = {}
+    except Exception as e:
+        pprint(e)
+        jsonRetorno = '{"status":"failed","descricao":'+json.dumps(e)+'}'
+    return jsonRetorno
+
+@route('User/Friends/:id', method='GET')
+def GetUserFriends(id):
+    try:
+        jsonRetorno = {}
+    except Exception as e:
+        pprint(e)
+        jsonRetorno = '{"status":"failed","descricao":'+json.dumps(e)+'}'
+    return jsonRetorno
+
+@route('User/Followers/:id', method='GET')
+def GetUserFollowers(id):
+    try:
+        jsonRetorno = {}
+    except Exception as e:
+        pprint(e)
+        jsonRetorno = '{"status":"failed","descricao":'+json.dumps(e)+'}'
+    return jsonRetorno
+
+
+run(host='localhost', port=8083)

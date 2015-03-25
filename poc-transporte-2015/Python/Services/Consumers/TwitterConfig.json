@@ -1,0 +1,255 @@
+{
+    "municipios_file":"G:\\Poc-Transporte\\svn\\Poc-Transporte-2015\\Python\\Outputs\\municipios.txt",
+    "cidades": [
+        "são_paulo",
+        "sao_paulo", "brasil/sp", "brasil", "sampa"
+    ],
+    "palavras_compostas": [
+        "ar condicionado",
+        "olho vivo",
+        "bilhete único",
+        "bilhete unico",
+        "ciclo via",
+        "de pe",
+        "de pé"
+    ],
+    "topicos": [
+        {
+            "topico": "acidentes",
+
+            "content": {
+                "municipios":["são_paulo", "sao_paulo"],
+                "siglas":["SP"],
+                "ignore": [],
+                "obrigatorio": [],
+                "contem": [
+                    "acidente",
+                    "acidentes",
+                    "acidentado",
+                    "incidente",
+                    "incidentes",
+                    "desastre",
+                    "fogo",
+                    "quebrado",
+                    "quebrou"
+                ]
+            }
+        },
+        {
+            "topico": "atropelamentos",
+            "content": {
+                "municipios":["são_paulo", "sao_paulo"],
+                "siglas":["SP"],
+                "ignore": [],
+                "obrigatorio": [],
+                "contem": [
+                    "atropelamento",
+                    "atropelamentos",
+                    "atropelado",
+                    "atropelou",
+                    "atropela"
+                ]
+            }
+        },
+        {
+            "topico": "cicloviasefaixas",
+            "content": {
+                "municipios":["são_paulo", "sao_paulo"],
+                "siglas":["SP"],
+                "ignore": [],
+                "obrigatorio": [],
+                "contem": [
+                    "ciclovia",
+                    "ciclo-via",
+                    "ciclo_via",
+                    "faixa",
+                    "corredor"
+                ]
+            }
+        },
+        {
+            "topico": "sptrans",
+            "content": {
+                "obrigatorio": [
+                    "sptrans", "sptrans_"
+                ],
+                "contem": [
+                    "itinerário",
+                    "olho_vivo",
+                    "serviço",
+                    "serviços",
+                    "passageiro",
+                    "passageira",
+                    "passageiros",
+                    "passageiras",
+                    "usuário",
+                    "usuaria",
+                    "usuários",
+                    "usuarias",
+                    "linha",
+                    "linhas",
+                    "ponto",
+                    "pontos",
+                    "paralisação",
+                    "paralisações",
+                    "paralisacao",
+                    "paralisacoes"
+                ]
+            }
+        },
+        {
+            "topico": "paralisações",
+            "content": {
+                "municipios":["são_paulo", "sao_paulo"],
+                "siglas":["SP"],
+                "obrigatorio": [],
+                "contem": [
+                    "paralisação",
+                    "paralisações",
+                    "paralisacao",
+                    "paralisacoes"
+                ]
+            }
+        },
+        {
+            "topico": "bilhete_unico",
+            "content": {
+
+                "obrigatorio": [],
+                "contem": [
+                    "bilhete_unico",
+                    "bilhete_único"
+                ]
+            }
+        },
+        {
+            "topico": "motorista-cobrador",
+            "content": {
+                "municipios":["são_paulo", "sao_paulo"],
+                "siglas":["SP"],
+                "ignore": [],
+                "obrigatorio": [],
+                "contem": [
+                    "motorista",
+                    "motoristas",
+                    "cobrador",
+                    "cobradores"
+                ]
+            }
+        },
+        {
+            "topico": "conforto",
+            "content": {
+                "municipios":["são_paulo", "sao_paulo"],
+                "siglas":["SP"],
+                "ignore": [],
+                "obrigatorio": [
+                    "ônibus",
+                    "onibus",
+                    "terminal",
+                    "terminais"
+                ],
+                "contem": [
+                    "ar_condicionado",
+                    "wifi",
+                    "wi-fi",
+                    "limp",
+                    "sujo",
+                    "sujeira",
+                    "furado",
+                    "rasgado",
+                    "conforto",
+                    "confortável",
+                    "confortavel",
+                    "lotado",
+                    "lotados",
+                    "lotadão",
+                    "lotadasso",
+                    "lotadao",
+                    "lotadaço",
+                    "cheio",
+                    "cheios",
+                    "sentado",
+                    "sentada",
+                    "de_pé",
+                    "de_pe",
+                    "esmagado",
+                    "esmagada",
+                    "esmagados",
+                    "esmagadas"
+                ]
+            }
+        },
+        {
+            "topico": "violência",
+            "content": {
+                "municipios":["são_paulo", "sao_paulo"],
+                "siglas":["SP"],
+                "ignore": [],
+                "obrigatorio": [],
+                "contem": [
+                    "assédio",
+                    "assedio",
+                    "assediado",
+                    "assediada",
+                    "assalto",
+                    "assaltado",
+                    "assaltada",
+                    "vandalo",
+                    "vândalo",
+                    "vandala",
+                    "vândala",
+                    "vandalos",
+                    "vandalas",
+                    "vandalismo",
+                    "vandalismos"
+                ]
+            }
+        }
+    ],
+    "rabbit": {
+        "server": "localhost",
+        "queue": "tweet",
+        "lenghtOfListCommit": 1
+    },
+    "mongodb": {
+        "server": "177.70.97.184",
+        "database": "sptrans",
+        "collection": "tweets"
+    },
+    "solr": {
+        "server": "177.70.97.79",
+        "port": "8983",
+        "collection": "sptrans"
+    },
+    "ner": {
+        "server": "177.70.97.184",
+        "port": "50321",
+        "url": ""
+    },
+    "ExtractorElementWebPageApi": {
+        "server": "177.70.97.184",
+        "port": "8085",
+        "title": "ExtractorElementWebPage"
+    },
+    "faceRecognitionApi": {
+        "server": "177.70.97.184",
+        "port": "8084",
+        "title": "FaceRecognition",
+        "api_key": "bad6d832a133a50fa0bd2cd14f6fd066",
+        "api_secret": "a4XTRPMi8NOHSo1uG-n0uz6DW5D8F82E"
+    },
+    "nlpApi": {
+        "server": "10.10.4.23",
+        "port": "8085",
+        "title": "nlp/ner"
+    },
+    "pathRootFolder": [
+        "G:\\Poc-Transporte\\svn\\Poc-Transporte-2015\\Python\\Utilities",
+        "G:\\Poc-Transporte\\svn\\Poc-Transporte-2015\\Python\\Services\\Solr",
+        "G:\\Poc-Transporte\\svn\\Poc-Transporte-2015\\Python\\EzMetrics-APIs\\Twitter"
+    ],
+    "twitter": {
+        "filters": "ônibus,onibus,ciclovia,trolebus,bilhetúnico,bilheteunico"
+    }
+}

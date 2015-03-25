@@ -1,0 +1,17 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""template.py: Description of what the module does."""
+
+from word2embeddings.tools.util import Enum
+
+
+Token = Enum(UNKNOWN='<UNK>',
+             SENT_START='<S>',
+             SENT_END='</S>',
+             PAD='<PAD>')
+
+TokenID = Enum(UNKNOWN=0,
+               SENT_START=1,
+               SENT_END=2,
+               PAD=3)

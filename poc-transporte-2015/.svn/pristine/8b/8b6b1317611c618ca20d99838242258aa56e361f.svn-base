@@ -1,0 +1,128 @@
+{
+	"rss": [
+	{
+	    "name": "Folha",
+	    "url": "http://feeds.folha.uol.com.br/cotidiano/rss091.xml",
+	    "extract_element": ".content p:not(.text)"
+	},
+	{
+	    "name": "G1",
+	    "url": "http://g1.globo.com/dynamo/sao-paulo/rss2.xml",
+	    "extract_element": ".materia-conteudo p"
+	},
+	{
+	    "name": "R7",
+	    "url": "http://noticias.r7.com/sao-paulo/feed.xml",
+	    "extract_element": ".content p"
+	},
+	{
+	    "name": "METRO NEWS",
+	    "url": "http://www.metronews.com.br/feed/",
+	    "extract_element": ".row p"
+	}
+	],
+	"palavras_compostas": [
+	    "ar condicionado",
+	    "olho vivo",
+	    "bilhete único",
+	    "bilhete unico"
+	],
+	"topicos": [
+	    {
+		"topico": "acidentes",
+		"content": {
+		    "obrigatorio": [],
+		    "contem": [
+			"acid",
+			"incid",
+			"desastr"
+		    ]
+		}
+	    },
+	    {
+		"topico": "atropelamentos",
+		"content": {
+		    "obrigatorio": [],
+		    "contem": [
+			"atropel"
+		    ]
+		}
+	    },
+	    {
+		"topico": "sptrans",
+		"content": {
+		    "obrigatorio": [],
+		    "contem": [
+			"sptrans",
+			"itiner",
+			"olho_vivo",
+			"serviç",
+			"passageir",
+			"usuári",
+			"usuari",
+			"linha",
+			"ponto"
+		    ]
+		}
+	    },
+	    {
+		"topico": "bilhete_unico",
+		"content": {
+		    "obrigatorio": [],
+		    "contem": [
+			"bilhete_unico",
+			"bilhete_único"
+		    ]
+		}
+	    },
+	    {
+		"topico": "motorista-cobrador",
+		"content": {
+		    "obrigatorio": [],
+		    "contem": [
+			"motorista",
+			"cobrador"
+		    ]
+		}
+	    },
+	    {
+		"topico": "conforto",
+		"content": {
+		    "obrigatorio": [
+			"ônibus",
+			"onibus",
+			"terminal",
+			"terminais"
+		    ],
+		    "contem": [
+			"ar_condicionado",
+			"wifi",
+			"wi-fi",
+			"limp",
+			"sujo",
+			"sujeira",
+			"furado",
+			"rasgado",
+			"confort",
+			"bonit"
+		    ]
+		}
+	    },
+	    {
+		"topico": "violência",
+		"content": {
+		    "obrigatorio": [],
+		    "contem": [
+			"assédi",
+			"assedi",
+			"assalt",
+			"vandal"
+		    ]
+		}
+	    }
+    ],
+    "rabbit": {
+        "server": "localhost",
+        "queue": "rss"
+    }
+}

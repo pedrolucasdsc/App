@@ -1,0 +1,466 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""trainer.py: Contains multiple training strategies."""
+
+import logging
+import sys
+from io import open, BytesIO
+from datetime import datetime
+from time import time
+from numpy import asarray, zeros
+from random import shuffle, randint
+import json
+import cPickle as pickle
+
+import theano
+from theano import config, shared
+from theano import tensor as T
+from word2embeddings.nn.layers import *
+from word2embeddings.lm.examples_generator import ExamplesGenerator
+from word2embeddings.tools.util import grouper
+from word2embeddings.lm.constants import TokenID 
+from word2embeddings.nn.tools import read_vocabulary_file
+from word2embeddings.lm.networks import WordPhraseNetwork
+
+
+LOG_FORMAT = "%(asctime).19s %(levelname)s %(filename)s: %(lineno)s %(message)s"
+
+class MiniBatchTrainer(object):
+  """ Stochastic gradient descent mini-batch trainer."""
+  def __init__(self, network=None):
+    # The neural network (model) that has to be trained
+    self.network = network
+    self._datetime_format = "%y_%m_%d_%H_%M"
+
+    # These should be generators that yields one example at a time.
+    self.train_data = None
+    self.dev_data = None
+
+    self.use_datasets = False
+
+    # Number of epochs that we should the trainer over the training data.
+    self.epochs = 10
+
+    # Size of the minibatch
+    self.batch_size = 10
+
+    # number of batches before logging speed and cost
+    self.num_batches = 1000
+
+    # Period in seconds
+    self.dump_period = 600
+    self.validation_period = 120
+    self.report_period = 60
+
+    # Time in seconds
+    self._last_validation = time()
+    self._last_dump = time()
+    self._last_report = time()
+
+    self.last_validation_avg_cost = 1.0
+    self.cache_batches = 10
+
+    self.train_monitor = {'costs': 0.0, 'batches': 0}
+    self.dev_monitor = {'costs': 0.0, 'batches': 0}
+
+    self.train_total_batches = 0
+    self.train_total_costs = 0.0
+
+    self.dev_total_batches = 0
+    self.dev_total_costs = 0.0
+
+    self.time_series = []
+    self.train_total_examples = []
+    self.dev_avg_cost_series = []
+    self.train_avg_cost_series = []
+
+    self.best_model = None
+    self.best_score = None
+    self.best_time = None
+    self.experiment_name = ""
+
+    self.epochwise = False
+    # This is disabled by default because serializing models takes few minutes.
+    self.save_best_model = False
+
+    self.validation_ready = self.validation_ready_time
+    self.training_report_ready = self.training_report_ready_time
+
+  @property
+  def name(self):
+    return self.network.name
+
+  def set_reporting_frequency(self, type_):
+    """ Set frequency of reports depending on number of examples or time."""
+    logging.info("Setting validation period type to %s", type_)
+    if type_ == 'time':
+      self.validation_ready = self.validation_ready_time
+      self.training_report_ready = self.training_report_ready_time
+      self._last_validation = time()
+      self._last_report = time()
+    if type_ == 'examples':
+      self.validation_ready = self.validation_ready_examples
+      self.training_report_ready = self.training_report_ready_examples
+      self._last_validation = 0
+      self._last_report = 0
+
+  def next_batch(self, data):
+    """ Accumulates examples into batches."""
+    for batch in grouper(data, self.batch_size):
+      yield batch
+
+  def last_train_avg_cost(self):
+    processed_batches = self.train_total_batches - self.train_monitor['batches']
+    accumulative_cost = self.train_total_costs - self.train_monitor['costs']
+    avg_cost = accumulative_cost / processed_batches
+    self.train_monitor['batches'] = self.train_total_batches
+    self.train_monitor['costs'] =  self.train_total_costs
+    return avg_cost
+
+  def last_dev_avg_cost(self):
+    processed_batches = self.dev_total_batches - self.dev_monitor['batches']
+    accumulative_cost = self.dev_total_costs - self.dev_monitor['costs']
+    avg_cost = accumulative_cost / processed_batches
+    self.dev_monitor['batches'] = self.dev_total_batches
+    self.dev_monitor['costs'] =  self.dev_total_costs
+    return avg_cost
+
+  def report(self):
+    self.train_avg_cost_series.append(self.last_train_avg_cost())
+    self.dev_avg_cost_series.append(self.last_dev_avg_cost())
+    self.time_series.append(time() - self.start_time)
+    self.train_total_examples.append(self.total_examples)
+
+    stats = {'time_series': self.time_series,
+             'examples_series': self.train_total_examples,
+             'train_loss_series': self.train_avg_cost_series,
+             'dev_loss_series': self.dev_avg_cost_series}
+
+    json.dump(stats, open('stats.json', 'wb'))
+
+  def dump_ready(self):
+    """ Return true if the network model that is being trained should be dumped
+    It guarantees that we are dumping the network model periodically depeding
+    on self.dump_period
+    """
+    if time() - self._last_dump > self.dump_period:
+      self._last_dump = time()
+      return True
+    return False
+
+  def validation_ready_time(self):
+    """ Returns true if we should run the network over the validation dataset.
+        It guarantees that we are calculating our validation loss periodically
+        depeding on self.validation_period
+    """
+    if time() - self._last_validation > self.validation_period:
+      self._last_validation = time()
+      return True
+    return False
+
+  def training_report_ready_time(self):
+    """ Returns true if we should run the network over the training dataset.
+        It guarantees that we are calculating our training loss periodically
+        depeding on self.validation_period/4
+    """
+    if time() - self._last_report > self.report_period:
+      self._last_report = time()
+      return True
+    return False
+
+  def validation_ready_examples(self):
+    """ Returns true if we should run the network over the validation dataset.
+        It guarantees that we are calculating our validation loss periodically
+        depeding on self.validation_period
+    """
+    if self.total_examples - self._last_validation > self.validation_period:
+      self._last_validation = self.total_examples
+      return True
+    return False
+
+  def training_report_ready_examples(self):
+    """ Returns true if we should run the network over the training dataset.
+        It guarantees that we are calculating our validation loss periodically
+        depeding on self.validation_period/4
+    """
+    if self.total_examples - self._last_report > self.report_period:
+      self._last_report = self.total_examples
+      return True
+    return False
+
+  def prepare_arguments(self, batch):
+    arguments = zip(*batch)
+    return arguments
+
+  def scoring_loop(self, input_data):
+    """ Calculates the average loss over the validation set."""
+    t = time()
+    # I am not sure what is this next doing
+    batch = input_data.next()
+    arguments = self.prepare_arguments(batch)
+    costs = self.network.validator(*arguments)
+    t = time() - t
+    num_batches = float(len(batch)) / self.batch_size
+    c = float(costs) * num_batches
+    return c, num_batches, t 
+
+  def validate(self):
+    """ Calculates the average loss over the validation set."""
+    costs, i, t = self.scoring_loop(self.dev_data)
+
+    self.dev_total_costs += costs
+    self.dev_total_batches += i
+
+    num_examples = i * self.batch_size
+    avg_cost = costs/float(i)
+
+    self.last_validation_avg_cost = avg_cost
+    logging.info("Average loss on %d example of the validation set is %f",
+                 num_examples, avg_cost)
+    logging.info("Speed of validation is %f example/s", num_examples/t)
+    if self.save_best_model:
+      self.best_model_save(avg_cost)
+
+    self.network.info()
+
+  def best_model_save(self, score, is_better_fn=lambda new,old: new < old):
+    """ Saves the model in memory if its better than the existing one"""
+
+    if self.best_model == None or is_better_fn(score, self.best_score):
+
+      if self.best_score == None:
+        logging.info("First validation phase complete. New score: %f", score)
+      else:
+        logging.info("Saving new best model from validation phase. "
+                     "Old score: %f, New score: %f", self.best_score, score)
+
+      start_time = time()
+
+      byteout = BytesIO()
+      self.dump(self.network, outstream=byteout)
+      self.best_model = byteout
+      self.best_score = score
+      self.best_time = time()
+
+      logging.info("Best model saved, in time %f s", time() - start_time)
+
+  def dump(self, network, outstream=None):
+    date_time = datetime.fromtimestamp(time())
+    time_string = date_time.strftime(self._datetime_format)
+    name = "%s_%s" % (self.name, time_string)
+    filename = name
+    state = pickle.dumps(network, cPickle.HIGHEST_PROTOCOL)
+    if outstream is not None:
+      outstream.write(state)
+      filename = outstream
+    else:
+      with open(filename+'.model', 'wb') as fh:
+        fh.write(state)
+    return filename
+
+  def test(self):
+    """ Tests a model against the test data.  This is typically used
+    with the best model found on the validation data."""
+    
+    logging.info("Evaluating best model (score: %f) against test data",
+                 self.best_score)
+
+  def early_exit(self):
+    """ Decides if the training should finish before completing all the epochs.
+    This is handy if we want to avoid over-fitting.
+    """
+    epoch_criteria = self.total_epochs >= self.epochs_limit
+    examples_criteria = self.total_examples >= self.examples_limit
+    if epoch_criteria or examples_criteria:
+      return True
+    return False
+
+  def exit_train(self):
+    logging.info("Training has exited...")
+    logging.info("Finished %d epochs", self.total_epochs)
+    logging.info("Finished %d examples", self.total_examples)
+    if not self.save_best_model:
+      sys.exit()
+
+    if self.best_score == None:
+      logging.info("No best score found, exiting.  (No validations completed?)")
+      logging.info("Forcing a validation step!")
+      self.validate()
+ 
+    logging.info("Saving best model found during training, score: %f",
+                 self.best_score)
+
+    date_time = datetime.fromtimestamp(self.best_time)
+    time_string = date_time.strftime(self._datetime_format)
+    filename = "best_%s__%s__%s" % (self.experiment_name, self.name,
+                                    time_string)
+
+    file_writer = open(filename, 'wb')
+    self.best_model.seek(0)
+    file_writer.write(self.best_model.read())
+    file_writer.close()
+    self.test()
+    sys.exit()
+
+  def add_examples(self):
+    eval_size = self.batch_size * self.num_batches
+    self.train_data = self.get_examples(self.train_file, 'training')
+    self.dev_data = grouper(self.get_examples(self.dev_file, 'dev'), eval_size)
+
+  def remaining(self, progress=0.0):
+    total_progress = self.total_epochs + progress
+    epoch_remaining = (1.0 - (total_progress / self.epochs_limit))
+    example_remaining = (1.0 - (float(self.total_examples) / self.examples_limit))
+    remaining = min(epoch_remaining, example_remaining)
+    return remaining
+  
+  def every_training_epoch(self):
+    self.total_epochs += 1
+    self.network.update_lr(self.remaining())
+  
+  def next_epoch(self, input_file, data_type):
+    examples = self.exgen.get_examples(input_file)
+    for example in examples:
+      yield self.process(example)
+    if data_type == 'training':
+      self.every_training_epoch()
+    logging.debug("Finished another epoch over all examples")
+
+  def get_examples(self, input_file, data_type='examples'):
+    generator = ExamplesGenerator()
+    generator.configure(self)
+    while True:
+      for example in self.next_epoch(input_file, data_type=data_type):
+        yield example
+
+  def get_example_generator(self):
+    generator = ExamplesGenerator()
+    generator.configure(self)
+    self.exgen = generator;
+
+  def configure(self, args):
+    self.train_file = args.train_file
+    self.dev_file = args.dev_file
+    self.vocab = read_vocabulary_file(args.vocab)
+    self.vocab_size = len(self.vocab.keys())
+    self.left_context_size = args.left_context
+    self.right_context_size = args.right_context
+    self.lang = args.lang
+    self.disable_padding = args.disable_padding
+    self.get_example_generator();
+    self.epochs_limit = args.epochs_limit
+    self.dump_period = args.dump_period
+    self.validation_period = int(args.validation_period)
+    self.batch_size = args.batch_size
+    self.set_reporting_frequency(args.period_type)
+    self.save_best_model = {"false": False, "true": True}[args.save_best.lower()]
+    self.epochs_limit = args.epochs_limit 
+    self.examples_limit = int(args.examples_limit)
+    self.decay_learning = args.decay_learning
+
+  def train(self):
+    self.network.build()
+    theano.printing.pydotprint(self.network.trainer, outfile='trainer.png')
+    theano.printing.pydotprint(self.network.validator, outfile='validator.png')
+    logging.info("Training will start with these settings")
+    logging.info('floatX: %s', floatX)
+    logging.info('intX: %s', intX)
+    logging.info('allow_gc: %s', config.allow_gc)
+    logging.info('device: %s', config.device)
+    logging.info('batch_size: %d', self.batch_size)
+
+    self.report_period = self.validation_period/4.0
+
+    self.start_time = time()
+    self.total_examples = 0
+    self.total_epochs = 0
+    i, costs = 0, 0.0
+
+    t_processing = 0.0
+    t = time()
+    for batch in self.next_batch(self.train_data):
+      t_start = time()
+      arguments = self.prepare_arguments(batch)
+      cost = self.network.trainer(*arguments)
+      t_processing += time() - t_start
+      self.total_examples += self.batch_size
+
+      self.train_total_costs += float(cost)
+      self.train_total_batches += 1
+
+      costs += float(cost)
+      i += 1
+
+      if self.training_report_ready():
+        num_examples = i*self.batch_size
+        t = time() - t
+        avg_cost = costs/float(i)
+        logging.info("Average loss on %d example of the training set is %f",
+                     num_examples, avg_cost)
+        logging.info("Speed of training is %f example/s", num_examples/t)
+        logging.info("Percentage of time spent by theano processing is %f",
+                     t_processing/t)
+        logging.info("Processed %d so far.", self.total_examples)
+
+        i, costs = 0, 0.0
+        t = time()
+        t_processing = 0.0
+
+      if self.dump_ready():
+        self.dump(self.network)
+
+      if self.validation_ready():
+        self.validate()
+        self.report()
+
+      if self.early_exit():
+        logging.info("In early exit code...")
+        self.dump(self.network)
+        self.exit_train()
+
+    self.exit_train()
+
+class HingeMiniBatchTrainer(MiniBatchTrainer):
+
+  def __init__(self):
+    super(HingeMiniBatchTrainer, self).__init__()
+    self.observed = T.matrix('observed', dtype=intX)
+    self.corrupted = T.matrix('corrupted', dtype=intX)
+    self.inputs = [self.observed, self.corrupted]
+
+  def process(self, example):
+    for i in range(len(example)):
+      if example[i] >= self.effective_vocab:
+        example[i] = TokenID.UNKNOWN
+    fake_example = [x for x in example]
+    fake_example[self.left_context] = randint(0, self.effective_vocab-1)
+    return (example, fake_example)
+
+  def get_embedding_layer(self, effective_vocab, size_embedding, name='C'):
+    embedding_layer = EmbeddingLayer(name, (effective_vocab, size_embedding))
+
+    logging.debug("Created new embedding layer named %s, size: (%d x %d)",
+                  name, effective_vocab, size_embedding)
+    return embedding_layer
+
+  def run(self, options):
+    self.configure(options)
+    self.effective_vocab = len(self.vocab.keys())
+    logging.debug("Effective size of the vocabulary %d", self.effective_vocab)
+    size_embedding = options.word_embedding_size
+ 
+    word_shape = (self.effective_vocab, size_embedding)
+    self.left_context = options.left_context
+    self.right_context = options.right_context
+    context = self.left_context + self.right_context + 1
+    hidden_layers = [int(x) for x in options.hidden_layers.split(',')]
+
+    self.network = WordPhraseNetwork(word_shape=word_shape, word_proj=context,
+                                     hidden_layers=hidden_layers)
+
+    self.network.set_learning_rate(float(options.learning_rate),
+                                   options.learning_method, self.decay_learning)
+    self.network.link(self.inputs)
+    self.add_examples()
+    self.train()

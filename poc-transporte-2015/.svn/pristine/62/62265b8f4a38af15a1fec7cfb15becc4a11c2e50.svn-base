@@ -1,0 +1,40 @@
+'''
+Created on 29/01/2015
+
+@author: pcosta
+'''
+
+from bottle import route, run, request
+import unirest
+from bs4 import BeautifulSoup
+from pprint import pprint
+import json
+
+@route('/ExtractorElementWebPage', method='POST')
+def ExtractorElementWebPage():
+    try:
+        jsonFind = request.json
+        objJsonFind = json.loads(jsonFind)
+        if "jsonFind" in objJsonFind:
+            jsonFind = objJsonFind["jsonFind"]
+        unirest.timeout(60)
+        response  = unirest.get(objJsonFind["urlWebPage"],
+          headers={
+            'Accept': 'application/json'
+          }
+        )
+        soup = BeautifulSoup(response.body)
+        if 'find' in objJsonFind and objJsonFind['find'] != {}:
+            retorno = soup.find(objJsonFind['tag'], {str(objJsonFind["find"].keys()[0]) : str(objJsonFind["find"][objJsonFind["find"].keys()[0]])})
+        else:
+            retorno = soup.find(objJsonFind['tag'])
+        if retorno == '':
+            jsonRetorno = {'element':''}
+        else:
+            jsonRetorno = {'element':retorno}
+    except Exception as e:
+        pprint(e)
+        jsonRetorno = '{"status":"failed","descricao":""}'
+    return jsonRetorno
+
+run(host='10.10.4.27', port=8084)

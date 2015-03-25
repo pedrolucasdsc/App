@@ -1,0 +1,80 @@
+﻿#-------------------------------------------------------------------------------
+# Name:        module1
+# Purpose:
+#
+# Author:      llima
+#
+# Created:     23/02/2015
+# Copyright:   (c) llima 2015
+# Licence:     <your licence>
+#-------------------------------------------------------------------------------
+from Aelius import Toqueniza, Chunking
+# classe que manipula a extração de tópicos em um documento ou feed.
+class TopicHandler():
+    def __init__(self, arqConfig):
+        self.palavras_compostas = arqConfig.palavras_compostas
+        self.topicos = arqConfig.topicos
+        self.dictContem = self.createTopicDictionaryContem()
+        self.dictObrigatorio = self.createTopicDictionaryObrigatorio()
+        self.dictTopicoObrigatorio = self.createDictTopicoObrigatorio()
+
+    def createDictTopicoObrigatorio(self):
+        dict ={}
+        for t in self.topicos:
+            if len(t.content.obrigatorio) > 0:
+                dict[t.topico] = True
+        return dict
+    def createTopicDictionaryContem(self):
+        dict ={}
+        for t in self.topicos:
+            for word in t.content.contem:
+                if dict.has_key(word):
+                    dict[word].append(t.topico)
+                else:
+                    dict[word] = [t.topico]
+        return dict
+    def createTopicDictionaryObrigatorio(self):
+        dict ={}
+        for t in self.topicos:
+            for word in t.content.obrigatorio:
+                if dict.has_key(word):
+                    dict[word].append(t.topico)
+                else:
+                    dict[word] = [t.topico]
+        return dict
+
+    def f7(self, seq):
+        seen = set()
+        seen_add = seen.add
+        return [ x for x in seq if not (x in seen or seen_add(x))]
+
+    def getWords(self,text):
+        # cria as palavras compostas
+        text = re.sub(r'[^\w\sáéíóúÁÉÍÓÚàÀãõÃÕâêîôûÂÊÎÔÛüÜ\n]','',text)
+        for p in self.palavras_compostas:
+            if p.encode("utf8") in text:
+                unique_word = p.replace(" ", "_")
+                text = text.replace(p.encode("utf8"), unique_word.encode("utf8"))
+
+        tokens=Toqueniza.TOK_PORT.tokenize(text)
+    def getTopicos(self, text):
+        topics = []
+        words = self.getWords(text)
+
+        found_topic = False
+        for w in words:
+            if self.dictContem.has_key(w.lower()):
+                if self.dictTopicoObrigatorio.has_key(self.dictContem[w.lower()]):
+                    found_obrigatorio = False
+                    for w in words:
+                        if self.dictObrigatorio.has_key(w.lower()):
+                            found_obrigatorio = True
+                            break
+                    if found_obrigatorio:
+                        topics.append(self.dictContem[w.lower()])
+                else:
+                    topics.append(self.dictContem[w.lower()])
+
+        topics = self.f7(topics)
+        return topics
+

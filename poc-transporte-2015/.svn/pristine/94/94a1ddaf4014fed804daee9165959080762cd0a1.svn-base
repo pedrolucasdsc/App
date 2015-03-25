@@ -1,0 +1,29 @@
+#! /usr/bin/env python
+
+from setuptools import setup
+
+def readme():
+    with open('README.rst') as f:
+        return f.read()
+
+setup(
+  name='word2embeddings',
+  version='1.0',
+  description='A tool to generate word embeddings',
+  author='Rami Al-Rfou',
+  maintainer='Rami Al-Rfou',
+  author_email='rmyeid@gmail.com',
+  download_url='https://bitbucket.org/aboSamoor/word2embeddings',
+  url='http://bit.ly/embeddings',
+  classifiers=[
+        'Topic :: Text Processing :: Linguistic'
+      ],
+  install_requires=[ 'numpy >= 1.6.0', 'theano'],
+  packages=['word2embeddings',
+            'word2embeddings.lm',
+            'word2embeddings.tools',
+            'word2embeddings.nn'],
+  scripts=[
+    'word2embeddings/create_embeddings.py'
+  ]
+)

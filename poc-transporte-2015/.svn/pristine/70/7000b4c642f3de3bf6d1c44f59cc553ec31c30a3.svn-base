@@ -1,0 +1,25 @@
+#-------------------------------------------------------------------------------
+# Name:        module1
+# Purpose:
+#
+# Author:      llima
+#
+# Created:     19/01/2015
+# Copyright:   (c) llima 2015
+# Licence:     <your licence>
+#-------------------------------------------------------------------------------
+import tweepy
+from tweepy import OAuthHandler
+import codecs
+import sys
+import json
+from collections import namedtuple
+
+sys.argv.extend(['config.json'])
+
+
+
+    #print results
+
+if __name__ == '__main__':
+    main()

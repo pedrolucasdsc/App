@@ -1,0 +1,146 @@
+{
+    "palavras_compostas": [
+        "ar condicionado",
+        "olho vivo",
+        "bilhete único",
+        "bilhete unico"
+    ],
+    "topicos": [
+        {
+            "topico": "acidentes",
+            "content": {
+                "obrigatorio": [],
+                "contem": [
+                    "acid",
+                    "incid",
+                    "desastr"
+                ]
+            }
+        },
+        {
+            "topico": "atropelamentos",
+            "content": {
+                "obrigatorio": [],
+                "contem": [
+                    "atropel"
+                ]
+            }
+        },
+        {
+            "topico": "sptrans",
+            "content": {
+                "obrigatorio": [],
+                "contem": [
+                    "sptrans",
+                    "itiner",
+                    "olho_vivo",
+                    "serviç",
+                    "passageir",
+                    "usuári",
+                    "usuari",
+                    "linha",
+                    "ponto"
+                ]
+            }
+        },
+        {
+            "topico": "bilhete_unico",
+            "content": {
+                "obrigatorio": [],
+                "contem": [
+                    "bilhete_unico",
+                    "bilhete_único"
+                ]
+            }
+        },
+        {
+            "topico": "motorista-cobrador",
+            "content": {
+                "obrigatorio": [],
+                "contem": [
+                    "motorista",
+                    "cobrador"
+                ]
+            }
+        },
+        {
+            "topico": "conforto",
+            "content": {
+                "obrigatorio": [
+                    "ônibus",
+                    "onibus",
+                    "terminal",
+                    "terminais"
+                ],
+                "contem": [
+                    "ar_condicionado",
+                    "wifi",
+                    "wi-fi",
+                    "limp",
+                    "sujo",
+                    "sujeira",
+                    "furado",
+                    "rasgado",
+                    "confort",
+                    "bonit"
+                ]
+            }
+        },
+        {
+            "topico": "violência",
+            "content": {
+                "obrigatorio": [],
+                "contem": [
+                    "assédi",
+                    "assedi",
+                    "assalt",
+                    "vandal"
+                ]
+            }
+        }
+    ],
+    "twitter": {
+        "access_token": "35251380-AoWytdKUvXN3gv7PUibIsLIENMBg4ftG3qVly2bFK",
+        "access_token_secret": "yqLbNpsvF3RxrOno9her88kqGStPkC7qeNsSXKvz04759",
+        "consumer_key": "ILWvCiPhgQvODwHERRpdCTm6k",
+        "consumer_secret": "ElMxL0Oo0kvQOixbDGzth95GgSAAsUo7qqW0g3zy6bfgQ8TZKG",
+        "filters": "ônibus,onibus"
+    },
+    "mongodb": {
+        "server": "177.70.97.184",
+        "database": "sptrans",
+        "collection": "tweets"
+    },
+    "mongodbSpatial": {
+        "server": "177.70.97.184",
+        "database": "sptrans",
+        "collection": "spatial"
+    },
+    "solr": {
+        "server": "177.70.97.79",
+        "port": "8983",
+        "collection": "sptrans"
+    },
+    "rabbit": {
+        "server": "localhost",
+        "queue": "tweet"
+    },
+    "faceRecognitionApi": {
+        "server": "10.10.4.23",
+        "port": "8083",
+        "title": "FaceRecognition",
+        "api_key": "bad6d832a133a50fa0bd2cd14f6fd066",
+        "api_secret": "a4XTRPMi8NOHSo1uG-n0uz6DW5D8F82E"
+    },
+    "ExtractorElementWebPageApi": {
+        "server": "10.10.4.23",
+        "port": "8084",
+        "title": "ExtractorElementWebPage"
+    },
+    "sentimentAnalysisApi": {
+        "server": "10.10.4.23",
+        "port": "8085",
+        "title": "sentiment/text"
+    },
+    "lenghtOfListCommit": 2
+}

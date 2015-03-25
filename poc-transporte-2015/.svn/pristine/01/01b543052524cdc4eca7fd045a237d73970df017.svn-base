@@ -1,0 +1,28 @@
+'''
+Created on 15/01/2015
+
+@author: pcosta
+'''
+
+from bottle import route, run, request
+import unirest
+from pprint import pprint
+@route('/FaceRecognition', method='POST')
+def FaceRecognition():
+    try:
+        mashape = request.forms.get('mashape')
+        linkImg = request.forms.get('linkImg')
+        unirest.timeout(60)
+        response  = unirest.get("https://faceplusplus-faceplusplus.p.mashape.com/detection/detect?attribute=glass%2Cpose%2Cgender%2Cage%2Crace%2Csmiling&url=" + linkImg,
+          headers={
+            "X-Mashape-Key": mashape,
+            "Accept": "application/json"
+          }
+        )
+        jsonRetorno = response.body
+    except Exception as e:
+        pprint(e)
+        jsonRetorno = '{"status":"failed","descricao":""}'
+    return jsonRetorno
+
+run(host='10.10.4.27', port=8083)

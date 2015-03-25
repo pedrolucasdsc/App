@@ -1,0 +1,61 @@
+﻿#-------------------------------------------------------------------------------
+# Name:        module1
+# Purpose:
+#
+# Author:      llima
+#
+# Created:     21/01/2015
+# Copyright:   (c) llima 2015
+# Licence:     <your licence>
+#-------------------------------------------------------------------------------
+#from pymongo import Connection
+#connection = Connection("177.70.97.79")
+#db = connection.sptrans
+import pysolr
+import codecs
+
+def getSolrQuery(solr, query, register_per_page):
+    results = solr.search(query, rows=register_per_page)
+    docs = results.docs
+    hits = results.hits
+    start = len(docs)
+    while start < hits:
+
+        results = solr.search(query, rows=register_per_page, start=start)
+        print (str(start) + " - " + str(hits))
+        docs += results.docs
+        start = len(docs)
+    return docs
+
+def main():
+    solr = pysolr.Solr('http://177.70.97.79:8983/solr/sptrans', timeout=10)
+    register_per_page = 100
+    #ACIDENTES
+    query = 'text_pt_:*acidente*'
+    print("get Acidentes")
+    docs = getSolrQuery(solr, query, register_per_page)
+    #ATROPELAMENTOS
+    print("get atropelamentos")
+    query = "text_pt_:*atropelamento*"
+    docs += getSolrQuery(solr, query, register_per_page)
+    #ONIBUS QUEBRADO
+    print("get onibus quebrado")
+    query = "text_pt_:*ônibus*quebrado*"
+    docs += getSolrQuery(solr, query, register_per_page)
+    #ONIBUS LOTADO
+    print("get onibus lotado")
+    query = "text_pt_:*ônibus*lotado*"
+    docs += getSolrQuery(solr, query, register_per_page)
+    dict ={}
+    for d in docs:
+        if not d['pre_process_text'].replace("\n"," ") in dict:
+            dict[d['pre_process_text'].replace("\n"," ")] = d;
+    f = codecs.open("twwets-negativos", "w", "utf-8")
+    f.write('tweet\tsentiment\ttopic\n')
+    for d in dict.values():
+        f.write(d['pre_process_text'].replace("\n"," ")+"\t" + "negativo" + "\t"+ ' '.join(['topico'])+"\n");
+    f.close()
+
+    print ("Done...")
+if __name__ == '__main__':
+    main()

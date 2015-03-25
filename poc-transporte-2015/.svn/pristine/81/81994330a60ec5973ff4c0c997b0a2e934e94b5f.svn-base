@@ -1,0 +1,29 @@
+#-------------------------------------------------------------------------------
+# Name:        module1
+# Purpose:
+#
+# Author:      llima
+#
+# Created:     03/12/2014
+# Copyright:   (c) llima 2014
+# Licence:     <your licence>
+#-------------------------------------------------------------------------------
+import gensim
+from gensim import corpora
+from gensim.models import Word2Vec
+import pickle
+import numpy
+words, embeddings = pickle.load(open('polyglot-pt.pkl', 'rb'))
+
+model = Word2Vec.load_word2vec_format('polyglot-pt.pkl', binary=True)
+
+print("Emebddings shape is {}".format(embeddings.shape))
+
+word_id = {w:i for (i, w) in enumerate(words)}
+id_word = dict(enumerate(words))
+
+
+
+
+
+print embeddings[word_id['colar']]

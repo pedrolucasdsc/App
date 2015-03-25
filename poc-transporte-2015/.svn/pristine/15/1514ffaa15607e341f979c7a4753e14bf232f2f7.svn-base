@@ -1,0 +1,80 @@
+#!C:\Python27\python.exe
+
+from argparse import ArgumentParser
+import logging
+import sys
+from io import open
+from word2embeddings.lm.examples_generator import ExamplesGenerator
+from word2embeddings.nn.trainer import HingeMiniBatchTrainer
+from word2embeddings.tools.util import debug
+
+LOG_FORMAT = "%(asctime).19s %(levelname)s %(filename)s: %(lineno)s %(message)s"
+
+
+def main(args):
+  trainer = HingeMiniBatchTrainer()
+  trainer.run(args)
+
+def input_arguments(parser):
+  parser.add_argument("--train-file", dest="train_file",
+                      help="Document for training that contains tokenized text")
+  parser.add_argument("--dev-file", dest="dev_file",
+                      help="Document for dev that contains tokenized text")
+  parser.add_argument("--vocabulary", dest="vocab",
+                      help="Vocabulary file that contains list of tokens.")
+  parser.add_argument("--language", dest="lang",
+                      help="language code being processed. For example, {en, es,"
+                      "...}", default='en')
+  parser.add_argument("--left-context", dest="left_context", type=int,
+                      help="Left context window to be used measured from the "
+                      "current token", default=2)
+  parser.add_argument("--right-context", dest="right_context", type=int,
+                      help="Right context window measured from the current token",
+                      default=2)
+  parser.add_argument("--disable-padding", dest="disable_padding", action="store_true",
+                      default=False, help="Disable padding sentences while generating examples")
+
+  # Following are trainer specific options.
+  parser.add_argument("--initial-word-embeddings", dest="initial_word_embeddings",
+                      help="A dump of a language model")
+  # lm arguments
+  parser.add_argument("--hidden-layers", dest="hidden_layers",
+                      help="Width of each hidden layer. Ex: 128 64 32",
+                      default="32")
+  parser.add_argument("--word-embedding-size", dest="word_embedding_size",
+                      type=int, default=64)
+  # Argument for MiniBatchTrainer
+  parser.add_argument("--epochs-limit", dest="epochs_limit", type=int, default=1)
+  parser.add_argument("--batch-size", dest="batch_size", type=int, default=16)
+  parser.add_argument("--learning-rate", dest="learning_rate", type=float, default=0.1)
+  parser.add_argument("--decay-learning", dest="decay_learning",
+                      help="Supports 'linear' decay for now.", default='')
+  parser.add_argument("--learning-method", dest="learning_method",
+                      help="Determine the method that learning rate is calculated."
+                      "Two options are available: {fan_in, global}",
+                      default='fan_in')
+  parser.add_argument("--dump-period", dest="dump_period", type=int,
+                      help="A model will be dumped every x seconds", default=1800)
+  parser.add_argument("--validation-period", dest="validation_period", type=float,
+                      help="A model will be evaluated every y seconds/examples.", default=5e5)
+  parser.add_argument("--period", dest="period_type", default="examples",
+                      help="Set the period to be in seconds or number of examples"
+                      "by setting the option to time or examples.")
+  parser.add_argument("--save-best", dest="save_best", default="false",
+                      help="Save the best model every validation period.")
+  parser.add_argument("--examples-limit", dest="examples_limit", type=float,
+                      help="Size of example to be used", default=1e9)
+
+ 
+
+if __name__ == "__main__":
+  parser = ArgumentParser()
+  parser.add_argument("-l", "--log", dest="log", help="log verbosity level",
+                      default="INFO")
+  input_arguments(parser)
+  args= parser.parse_args()
+  if args.log == 'DEBUG':
+    sys.excepthook = debug
+  numeric_level = getattr(logging, args.log.upper(), None)
+  logging.basicConfig(level=numeric_level, format=LOG_FORMAT)
+  main(args)

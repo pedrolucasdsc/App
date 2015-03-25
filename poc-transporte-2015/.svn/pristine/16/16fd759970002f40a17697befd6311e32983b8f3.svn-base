@@ -1,0 +1,184 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+""" Defines basic network structure that composed by several layers."""
+
+import logging
+from time import time
+from itertools import izip
+
+import theano
+from theano import tensor as T
+
+from word2embeddings.nn.layers import Model
+from word2embeddings.nn.layers import BiasedHiddenLayer, HiddenLayer
+
+
+LOGFORMAT = "%(asctime).19s %(levelname)s %(filename)s: %(lineno)s %(message)s"
+
+
+class Network(Model):
+  """ General full connected neural network."""
+  def __init__(self, name='Network', inputs=None):
+    self.name = name
+    self.layers = []
+    self.inputs = inputs
+    self.exceptions = {}
+    self.use_datasets = False
+    self._outputs = None
+
+  def set_learning_rate(self, lr, method='global', lr_decay=None):
+    """Set network global lr and update the local lr of the layers"""
+    for layer in self.layers:
+      layer.set_learning_rate(lr, method, lr_decay)
+
+  def update_lr(self, remaining):
+    for layer in self.layers:
+      layer.update_lr(remaining)
+
+  def size(self):
+    return T.sum([layer.size() for layer in self.layers])
+
+  def append(self, layer):
+    """ Link a new layer to the stack of the hidden layers."""
+    self.layers.append(layer)
+    if len(self.layers) > 1:
+      last = self.layers[-1]
+      previous = self.layers[-2]
+      last.link(previous.outputs)
+    else:
+      self.layers[0].link(self.inputs)
+
+  def set_layers(self, layers):
+    self.layers = layers
+
+  def link(self, inputs):
+    for layer in self.layers:
+      layer.link(inputs)
+      inputs = layer.outputs
+
+  @property
+  def cost(self):
+    return self.layers[-1].outputs[0]
+
+  @property
+  def outputs(self):
+    """ The output of the last layer in the network."""
+    if not self._outputs:
+      return self.layers[-1].outputs
+    return self._outputs
+
+  @outputs.setter
+  def outputs(self, value):
+    self._outputs = value
+
+  @property
+  def alpha(self):
+    return self.layers[-1].alpha
+
+  @alpha.setter
+  def alpha(self, value):
+    self.layers[-1].alpha = value
+
+  def params(self):
+    """ Iterates over all the parameters of the network."""
+    for layer in self.layers:
+      for param in layer.params():
+        yield param
+
+  def build(self):
+    """ Build theano functions for training, validation and testing."""
+    self.forward_pass = theano.function(inputs=self.inputs,
+                                        outputs=self.outputs)
+    def givens(dataset):
+      idx = self.index
+      b = self.batch_size
+      nxt = idx + 1
+      return {input: dataset[i][idx*b: nxt*b] for i, input in enumerate(self.inputs)}
+    if self.use_datasets:
+      self.index = T.lscalar()
+      self.trainer = theano.function(
+                     inputs=[self.index],
+                     outputs=self.cost,
+                     updates=self.updates(self.cost),
+                     givens=givens(self.train_dataset))
+
+      self.validator = theano.function(inputs=[self.index],
+                                      outputs=self.cost,
+                                      givens=givens(self.dev_dataset))
+
+      self.tester = theano.function(inputs=[self.index],
+                                    outputs=self.cost,
+                                    givens=givens(self.test_dataset))
+    else:
+      self.trainer = theano.function(
+                     inputs=self.inputs,
+                     outputs=self.cost,
+                     updates=self.updates(self.cost))
+
+      self.validator = theano.function(inputs=self.inputs,
+                                       outputs=self.cost)
+
+      self.tester = theano.function(inputs=self.inputs,
+                                    outputs=self.cost)
+
+  @property
+  def L1(self):
+    """ Calculates the sum of all the parameters weights of the network."""
+    return T.sum([layer.L1 for layer in self.layers])
+
+  @property
+  def L2(self):
+    """ Calculates the sum of the squared parameters weights of the network."""
+    return T.sum([layer.L2 for layer in self.ayers])
+
+  def updates(self, cost):
+    """ Defines the list of functions that update the network parameters."""
+    updates = []
+    for layer in filter(lambda x: x not in self.exceptions, self.layers):
+      for update in layer.updates(cost):
+        param, expr  = update
+        if param not in self.exceptions:
+          updates.append(update)
+    return updates
+  
+  def set_clipping(self, threshold):
+    for layer in self.layers:
+      layer.clipping = True
+      layer.threshold = threshold
+
+  def status(self):
+    for layer in self.layers:
+      for param, status in layer.status():
+        yield param, status
+
+  def info(self):
+    for layer in self.layers:
+      for param, status in layer.status():
+        logging.debug(param.name + u'\t\t' + status)
+
+class StackedBiasedHidden(Network):
+  """ Sequence of fully connected layers."""
+
+  def __init__(self, name="Biased", layers=None):
+    super(StackedBiasedHidden, self).__init__()
+    self.name = name
+    self.stack_layers(layers)
+
+  def stack_layers(self, layers):
+    """ Create a list of fully connected hidden layers according to the sizes"""
+    shapes = izip(layers[:-1], layers[1:])
+    for i, shape in enumerate(shapes):
+      name = '%s_layers_stack_%i_(%ix%i)' % (self.name, i, shape[0], shape[1])
+      layer = BiasedHiddenLayer(name=name, shape=shape)
+      self.layers.append(layer)
+
+  def link(self, inputs):
+    self.inputs = inputs
+    for layer in self.layers:
+      inputs = layer.link([inputs[0]])
+    return self.outputs
+
+  def build(self):
+    self.forward_pass = theano.function(inputs=self.inputs,
+                                        outputs=self.outputs)

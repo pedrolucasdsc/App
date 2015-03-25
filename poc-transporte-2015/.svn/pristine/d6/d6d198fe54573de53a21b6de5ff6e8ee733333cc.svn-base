@@ -1,0 +1,82 @@
+#-------------------------------------------------------------------------------
+# Name:        module1
+# Purpose:
+#
+# Author:      llima
+#
+# Created:     03/12/2014
+# Copyright:   (c) llima 2014
+# Licence:     <your licence>
+#-------------------------------------------------------------------------------
+# Steps to generate a Word2VecModel with Wikipedia Articles
+
+# open tokenized wikipedia articles.
+
+# split in sentences and save in temp file
+
+# open temp file and for each sentence, remove ponctuaction using regex and save in temp2
+
+# open temp file 2 and generate a model using gensim
+
+# save model in binary and text format
+
+import codecs
+from gensim.models import Word2Vec
+from gensim.models.word2vec import LineSentence
+import string
+import nltk.data
+sent_detector = nltk.data.load('tokenizers/punkt/portuguese.pickle')
+
+table = string.maketrans("","")
+
+def getFile(filepath):
+    return codecs.open(filepath, "r", "utf-8")
+
+def splitSentencesAndSaveTempFile(fp):
+    myTemp = codecs.open("temp.txt", "w", "utf-8")
+    for chunk in iter(lambda: fp.readline(), ''):
+        sents = sent_detector.tokenize(chunk.strip())
+        myTemp.writelines(sents)
+    myTemp.close()
+    return "temp.txt"
+def removePonctuation(text):
+    return text.encode('utf-8').translate(table, string.punctuation).decode('utf-8')
+
+
+def generateWord2VecModel(filepath):
+    print("get Sentences...")
+    sentences = LineSentence(filepath)
+    print("Initiating model...")
+    model = Word2Vec(sentences= sentences, workers=2)
+    print("creating vocabulary...")
+    model.build_vocab(sentences) #This strangely builds a vocab of "only" 747904 words which is << than those reported in the literature 10M words
+    print("training model...")
+    model.train(sentences,chunksize=500)
+    print("saving txt model...")
+    model.save_word2vec_format("word2vec_wiki_pt.txt", binary=False);
+    print("saving binary model...")
+    model.save_word2vec_format("word2vec_wiki_pt.bin", binary=True);
+    print("Done!")
+
+
+if __name__ == '__main__':
+    print("open tokenized wikipedia file ...")
+    myfile = getFile("full.txt")
+    #print("Split file in sentences...")
+    #tempFile = splitSentencesAndSaveTempFile(myfile)
+    #myfile.close()
+    #myTemp = getFile(tempFile);
+    myTemp2 = codecs.open("temp2.txt", "w", "utf-8")
+    print("remove ponctuation...")
+    count = 0;
+    myfile.readline()
+    for chunk in iter(lambda: myfile.readline(), ''):
+        line = removePonctuation(chunk)
+        myTemp2.write(line)
+        count = count + 1
+        if (count % 10000 == 0):
+            print("removed " + str(count))
+
+    #myTemp.close()
+    myTemp2.close()
+    generateWord2VecModel("temp2.txt")

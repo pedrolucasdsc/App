@@ -1,0 +1,45 @@
+{
+        "twitter":{
+            "access_token" : "35251380-AoWytdKUvXN3gv7PUibIsLIENMBg4ftG3qVly2bFK",
+            "access_token_secret" : "yqLbNpsvF3RxrOno9her88kqGStPkC7qeNsSXKvz04759",
+            "consumer_key" : "ILWvCiPhgQvODwHERRpdCTm6k",
+            "consumer_secret" : "ElMxL0Oo0kvQOixbDGzth95GgSAAsUo7qqW0g3zy6bfgQ8TZKG",
+            "filters":"ônibus,onibus"
+        },
+        "mongodb":{
+            "server":"177.70.97.184",
+            "database":"sptrans",
+            "collection":"tweets"
+        },
+        "mongodbSpatial":{
+            "server":"177.70.97.184",
+            "database":"sptrans",
+            "collection":"spatial"
+        },
+        "solr":{
+            "server":"177.70.97.79",
+            "port":"8983",
+            "collection":"collection1"
+        },
+        "rabbit":{
+            "server":"127.0.0.1",
+            "queue":"tweet"
+        },
+        "faceRecognitionApi":{
+            "server":"10.10.4.27",
+            "port":"8083",
+            "title":"FaceRecognition",
+            "mashape":"au78YMXLmRmsh9PI0uiKy2oO2akZp1iYp9ajsnIZtlinxJZB5O"
+        },
+        "ExtractorElementWebPageApi":{
+            "server":"10.10.4.27",
+            "port":"8084",
+            "title":"ExtractorElementWebPage"
+        },
+        "sentimentalAnalysisApi":{
+            "server":"10.10.4.27",
+            "port":"8085",
+            "title":"SentimentalAnalysis"
+        },
+        "lenghtOfListCommit":713
+    }

@@ -1,0 +1,225 @@
+{
+	"rss": [
+    	{
+    	    "name": "Folha",
+    	    "url": "http://feeds.folha.uol.com.br/cotidiano/rss091.xml",
+    	    "extract_element": ".content p:not(.text)"
+    	},
+    	{
+    	    "name": "G1",
+    	    "url": "http://g1.globo.com/dynamo/sao-paulo/rss2.xml",
+    	    "extract_element": ".materia-conteudo p"
+    	},
+    	{
+    	    "name": "METRO NEWS",
+    	    "url": "http://www.metronews.com.br/feed/",
+    	    "extract_element": ".row p"
+    	}
+	],
+	"rabbit": {
+        "server": "localhost",
+        "queue": "rss"
+    },
+    "palavras_compostas": [
+        "ar condicionado",
+        "olho vivo",
+        "bilhete único",
+        "bilhete unico",
+        "rio de janeiro",
+        "distrito federal",
+        "santa catarina",
+        "belo horizonte",
+        "minais gerais",
+        "rio grande do",
+        "porto alegre",
+        "espirito santo",
+        "espírito santo",
+        "campo grande",
+        "sao paulo",
+        "são paulo",
+        "ciclo via",
+        "de pe",
+        "de pé"
+    ],
+    "topicos": [
+        {
+            "topico": "acidentes",
+            "content": {
+                "ignore":[],
+                "obrigatorio": [],
+                "contem": [
+                    "acidente",
+                    "acidentes",
+                    "acidentado",
+                    "incidente",
+                    "incidentes",
+                    "desastre",
+                    "fogo",
+                    "quebrado",
+                    "quebrou"
+                ]
+            }
+        },
+        {
+            "topico": "atropelamentos",
+            "content": {
+                "ignore": [],
+                "obrigatorio": [],
+                "contem": [
+                    "atropelamento",
+                    "atropelamentos",
+                    "atropelado",
+                    "atropelou",
+                    "atropela"
+                ]
+            }
+        },
+        {
+            "topico": "cicloviasefaixas",
+            "content": {
+                "ignore":[],
+                "obrigatorio": [],
+                "contem": [
+                    "ciclovia",
+                    "ciclo-via",
+                    "ciclo_via",
+                    "faixa",
+                    "corredor"
+                ]
+            }
+        },
+        {
+            "topico": "sptrans",
+            "content": {
+                "ignore":[],
+                "obrigatorio": [
+                    "sptrans"
+                ],
+                "contem": [
+                    "itinerário",
+                    "olho_vivo",
+                    "serviço",
+                    "serviços",
+                    "passageiro",
+                    "passageira",
+                    "passageiros",
+                    "passageiras",
+                    "usuário",
+                    "usuaria",
+                    "usuários",
+                    "usuarias",
+                    "linha",
+                    "linhas",
+                    "ponto",
+                    "pontos",
+                    "paralisação",
+                    "paralisações",
+                    "paralisacao",
+                    "paralisacoes"
+                ]
+            }
+        },
+        {
+            "topico": "paralisações",
+            "content": {
+                "ignore": [],
+                "obrigatorio": [],
+                "contem": [
+                    "paralisação",
+                    "paralisações",
+                    "paralisacao",
+                    "paralisacoes"
+                ]
+            }
+        },
+        {
+            "topico": "bilhete_unico",
+            "content": {
+                "obrigatorio": [],
+                "contem": [
+                    "bilhete_unico",
+                    "bilhete_único"
+                ]
+            }
+        },
+        {
+            "topico": "motorista-cobrador",
+            "content": {
+                "ignore": [],
+                "obrigatorio": [],
+                "contem": [
+                    "motorista",
+                    "motoristas",
+                    "cobrador",
+                    "cobradores"
+                ]
+            }
+        },
+        {
+            "topico": "conforto",
+            "content": {
+                "ignore":[],
+                "obrigatorio": [
+                    "ônibus",
+                    "onibus",
+                    "terminal",
+                    "terminais"
+                ],
+                "contem": [
+                    "ar_condicionado",
+                    "wifi",
+                    "wi-fi",
+                    "limp",
+                    "sujo",
+                    "sujeira",
+                    "furado",
+                    "rasgado",
+                    "conforto",
+                    "confortável",
+                    "confortavel",
+                    "bonito",
+                    "lotado",
+                    "lotados",
+                    "lotadão",
+                    "lotadasso",
+                    "lotadao",
+                    "lotadaço",
+                    "cheio",
+                    "cheios",
+                    "sentado",
+                    "sentada",
+                    "de_pé",
+                    "de_pe",
+                    "esmagado",
+                    "esmagada",
+                    "esmagados",
+                    "esmagadas"
+                ]
+            }
+        },
+        {
+            "topico": "violência",
+            "content": {
+                "ignore":[],
+                "obrigatorio": [],
+                "contem": [
+                    "assédio",
+                    "assedio",
+                    "assediado",
+                    "assediada",
+                    "assalto",
+                    "assaltado",
+                    "assaltada",
+                    "vandalo",
+                    "vândalo",
+                    "vandala",
+                    "vândala",
+                    "vandalos",
+                    "vandalas",
+                    "vandalismo",
+                    "vandalismos"
+                ]
+            }
+        }
+    ]
+}

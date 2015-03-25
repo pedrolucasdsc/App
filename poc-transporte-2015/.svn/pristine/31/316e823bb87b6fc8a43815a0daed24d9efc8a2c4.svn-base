@@ -1,0 +1,22 @@
+﻿#-------------------------------------------------------------------------------
+# Name:        module1
+# Purpose:
+#
+# Author:      llima
+#
+# Created:     05/12/2014
+# Copyright:   (c) llima 2014
+# Licence:     <your licence>
+#-------------------------------------------------------------------------------
+import codecs
+from gensim.models import Word2Vec
+from gensim.models.word2vec import LineSentence
+import string
+def main():
+    model = Word2Vec.load_word2vec_format('word2vec_wiki_pt.bin', binary=True);
+    model.most_similar(positive=['mulher', 'rei'], negative=['homem'])
+    model.doesnt_match("astronomia estrela lua médico".split())
+    model.similarity('mulher', 'homem')
+
+if __name__ == '__main__':
+    main()

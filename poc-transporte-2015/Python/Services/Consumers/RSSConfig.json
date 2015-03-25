@@ -1,0 +1,251 @@
+{
+    "municipios_file":"G:\\Poc-Transporte\\svn\\Poc-Transporte-2015\\Python\\Outputs\\municipios.txt"
+    "rss": [
+        {
+            "name": "Folha",
+            "url": "http://feeds.folha.uol.com.br/cotidiano/rss091.xml",
+            "review": {
+                "url": "http://comentarios1.folha.com.br/index?skin=folhaonline",
+                "registers_page_param": "sr",
+                "registers_per_page": 50,
+                "find": "ol.comments-list li a",
+                "find_review": "ol.comments-content li"
+            },
+            "find": "div.content p"
+        },
+        {
+            "name": "G1",
+            "url": "http://g1.globo.com/dynamo/sao-paulo/rss2.xml",
+            "find": "div.materia-conteudo p"
+        },
+
+        {
+            "name": "METRONEWS",
+            "url": "http://www.metronews.com.br/feed/",
+            "find": ".rowp",
+            "review":{
+
+            }
+        }
+    ],
+    "palavras_compostas": [
+        "ar condicionado",
+        "olho vivo",
+        "bilhete único",
+        "bilhete unico",
+        "ciclo via",
+        "de pe",
+        "de pé"
+    ],
+    "topicos": [
+        {
+            "topico": "acidentes",
+            "content": {
+                "ignore":[],
+                "obrigatorio": [],
+                "contem": [
+                    "acidente",
+                    "acidentes",
+                    "acidentado",
+                    "incidente",
+                    "incidentes",
+                    "desastre",
+                    "fogo",
+                    "quebrado",
+                    "quebrou"
+                ]
+            }
+        },
+        {
+            "topico": "atropelamentos",
+            "content": {
+                "ignore": [],
+                "obrigatorio": [],
+                "contem": [
+                    "atropelamento",
+                    "atropelamentos",
+                    "atropelado",
+                    "atropelou",
+                    "atropela"
+                ]
+            }
+        },
+        {
+            "topico": "cicloviasefaixas",
+            "content": {
+                "ignore":[],
+                "obrigatorio": [],
+                "contem": [
+                    "ciclovia",
+                    "ciclo-via",
+                    "ciclo_via",
+                    "faixa",
+                    "corredor"
+                ]
+            }
+        },
+        {
+            "topico": "sptrans",
+            "content": {
+                "ignore":[],
+                "obrigatorio": [
+                    "sptrans"
+                ],
+                "contem": [
+                    "itinerário",
+                    "olho_vivo",
+                    "serviço",
+                    "serviços",
+                    "passageiro",
+                    "passageira",
+                    "passageiros",
+                    "passageiras",
+                    "usuário",
+                    "usuaria",
+                    "usuários",
+                    "usuarias",
+                    "linha",
+                    "linhas",
+                    "ponto",
+                    "pontos",
+                    "paralisação",
+                    "paralisações",
+                    "paralisacao",
+                    "paralisacoes"
+                ]
+            }
+        },
+        {
+            "topico": "paralisações",
+            "content": {
+                "ignore": [],
+                "obrigatorio": [],
+                "contem": [
+                    "paralisação",
+                    "paralisações",
+                    "paralisacao",
+                    "paralisacoes"
+                ]
+            }
+        },
+        {
+            "topico": "bilhete_unico",
+            "content": {
+                "obrigatorio": [],
+                "contem": [
+                    "bilhete_unico",
+                    "bilhete_único"
+                ]
+            }
+        },
+        {
+            "topico": "motorista-cobrador",
+            "content": {
+                "ignore": [],
+                "obrigatorio": [],
+                "contem": [
+                    "motorista",
+                    "motoristas",
+                    "cobrador",
+                    "cobradores"
+                ]
+            }
+        },
+        {
+            "topico": "conforto",
+            "content": {
+                "ignore":[],
+                "obrigatorio": [
+                    "ônibus",
+                    "onibus",
+                    "terminal",
+                    "terminais"
+                ],
+                "contem": [
+                    "ar_condicionado",
+                    "wifi",
+                    "wi-fi",
+                    "limp",
+                    "sujo",
+                    "sujeira",
+                    "furado",
+                    "rasgado",
+                    "conforto",
+                    "confortável",
+                    "confortavel",
+                    "bonito",
+                    "lotado",
+                    "lotados",
+                    "lotadão",
+                    "lotadasso",
+                    "lotadao",
+                    "lotadaço",
+                    "cheio",
+                    "cheios",
+                    "sentado",
+                    "sentada",
+                    "de_pé",
+                    "de_pe",
+                    "esmagado",
+                    "esmagada",
+                    "esmagados",
+                    "esmagadas"
+                ]
+            }
+        },
+        {
+            "topico": "violência",
+            "content": {
+                "ignore":[],
+                "obrigatorio": [],
+                "contem": [
+                    "assédio",
+                    "assedio",
+                    "assediado",
+                    "assediada",
+                    "assalto",
+                    "assaltado",
+                    "assaltada",
+                    "vandalo",
+                    "vândalo",
+                    "vandala",
+                    "vândala",
+                    "vandalos",
+                    "vandalas",
+                    "vandalismo",
+                    "vandalismos"
+                ]
+            }
+        }
+    ],
+    "rabbit": {
+        "server": "localhost",
+        "queue": "rss",
+        "lenghtOfListCommit": 10
+    },
+    "mongodb": {
+        "server": "177.70.97.184",
+        "database": "sptrans",
+        "collection": "rss"
+    },
+    "solr": {
+        "server": "177.70.97.79",
+        "port": "8983",
+        "collection": "sptrans-rss"
+    },
+    "ner": {
+        "server": "10.10.4.27",
+        "port": "50321",
+        "url": ""
+    },
+    "ExtractorElementWebPageApi":{
+        "server":"10.10.4.23",
+        "port": "8084",
+        "title": "ExtractorElementWebPage"
+    },
+    "nlpApi":{
+        "server":"10.10.4.23",
+        "port": "8085",
+        "title": "nlp/ner"
+    }
+}

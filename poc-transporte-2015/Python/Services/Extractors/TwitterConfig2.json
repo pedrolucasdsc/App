@@ -1,0 +1,14 @@
+{
+
+    "rabbit": {
+        "server": "localhost",
+        "queue": "tweet"
+    },
+    "twitter":{
+        "consumer_key":"ILWvCiPhgQvODwHERRpdCTm6k",
+        "consumer_secret":"ElMxL0Oo0kvQOixbDGzth95GgSAAsUo7qqW0g3zy6bfgQ8TZKG",
+        "access_token":"35251380-AoWytdKUvXN3gv7PUibIsLIENMBg4ftG3qVly2bFK",
+        "access_token_secret":"yqLbNpsvF3RxrOno9her88kqGStPkC7qeNsSXKvz04759",
+        "filters": "ônibus,onibus,ciclovia,trolebus,bilhetúnico,bilheteunico"
+    }
+}

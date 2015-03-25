@@ -1,0 +1,15 @@
+{
+    "pathRootFolder": [
+        "D:\\ProjetosDesenvolvidos\\TortoiseSvn\\poc-transporte-2015",
+        "D:\\ProjetosDesenvolvidos\\TortoiseSvn\\poc-transporte-2015\\Python\\Services\\Solr",
+		"D:\\ProjetosDesenvolvidos\\TortoiseSvn\\poc-transporte-2015\\Python\\Utilities"
+    ],
+	"serverRedisIp":"177.70.97.184",
+	"serverSolrIp":"177.70.97.184",
+	"twitter":{
+		"token":"35251380-AoWytdKUvXN3gv7PUibIsLIENMBg4ftG3qVly2bFK",
+		"token_secret":"yqLbNpsvF3RxrOno9her88kqGStPkC7qeNsSXKvz04759",
+		"con_key":"ILWvCiPhgQvODwHERRpdCTm6k",
+		"con_secret":"ElMxL0Oo0kvQOixbDGzth95GgSAAsUo7qqW0g3zy6bfgQ8TZKG"
+	}
+}

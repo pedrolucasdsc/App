@@ -1,0 +1,91 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""examples_generator.py: Examples generator for language models training."""
+
+from argparse import ArgumentParser
+import logging
+import sys
+from io import open
+
+from word2embeddings.lm.constants import Token, TokenID
+from word2embeddings.tools.util import debug
+import codecs
+
+LOG_FORMAT = "%(asctime).19s %(levelname)s %(filename)s: %(lineno)s %(message)s"
+
+class Error(Exception):
+  """ Base class to be used for other module's exceptions."""
+
+class SpanNotUsedError(Error):
+  """ Raised if the a token of a particular span is not picked."""
+
+class ExamplesGenerator(object):
+  """ Generates sequence of fixed-width window of tokens."""
+  def get_examples(self, file):
+    with codecs.open(file,'r', 'utf-8', errors='ignore') as fd:
+    # This generator might be buggy
+      if self.disable_padding:
+        for sent in self.iter_sentences(fd):
+          for example in self.sent_examples(sent):
+            yield example
+      else:
+        for sent in self.iter_padded_sentences(fd):
+          for example in self.sent_examples(sent):
+            yield example
+      
+
+  def iter_padded_sentences(self, fileObject):
+    for line in fileObject:
+      yield self.pad_sent(line.split())
+
+  def iter_sentences(self, fileObject):
+    for line in fileObject:
+      yield line.split()
+
+  def pad_sent(self, tokens):
+    sent = [Token.SENT_START]
+    sent.extend(tokens)
+    sent.append(Token.SENT_END)
+    return sent
+    
+  def sent_indices(self, sent):
+    """Takes a sentence of tokens (words) and return their vocabulary indices."""
+    sent_indices = []
+    for t in sent:
+      sent_indices.append(self.word_id.get(t, TokenID.UNKNOWN))
+    return sent_indices
+
+  def sent_examples(self, sent):
+    """Turns a sentence into a number of examples.
+       An example is like {'sources': [list of feature vectors]}
+    """
+    indices = self.sent_indices(sent) 
+    length = len(indices)
+
+    # if the padding is disabled start pos from leftcontext+1
+    start_offset = self.left_context_size if self.disable_padding else 1
+    end_offset = self.right_context_size if self.disable_padding else 1
+
+    for pos in range(start_offset, length-end_offset):
+      left_context = indices[max(0, pos-self.left_context_size): pos]
+      right_context = indices[pos+1: pos+1+self.right_context_size]
+
+      left_diff = self.left_context_size - len(left_context)
+      if left_diff > 0:
+        left_context = left_diff*[TokenID.PAD] + left_context
+
+      right_diff = self.right_context_size - len(right_context)
+      if right_diff > 0:
+        right_context = right_context + right_diff*[TokenID.PAD]
+
+      example = left_context + [indices[pos]] + right_context
+      yield example
+
+  def configure(self, options): 
+    self.word_id = options.vocab
+    self.vocab_size = len(self.word_id.keys())
+    self.left_context_size = options.left_context_size
+    self.right_context_size = options.right_context_size
+    self.lang = options.lang
+    self.disable_padding = options.disable_padding

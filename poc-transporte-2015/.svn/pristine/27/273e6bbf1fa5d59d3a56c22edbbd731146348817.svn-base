@@ -1,0 +1,9 @@
+{
+    "pathRootFolder": [
+        "D:\\ProjetosDesenvolvidos\\TortoiseSvn\\poc-transporte-2015",
+        "D:\\ProjetosDesenvolvidos\\TortoiseSvn\\poc-transporte-2015\\Python\\Services\\Solr",
+		"D:\\ProjetosDesenvolvidos\\TortoiseSvn\\poc-transporte-2015\\Python\\Utilities"
+    ],
+	"serverRedisIp":"177.70.97.184",
+	"serverSolrIp":"177.70.97.184"
+}

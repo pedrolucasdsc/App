@@ -1,0 +1,302 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+""" Construct fully connected layers on top of theano model interaface."""
+
+import logging
+from util import *
+from time import time
+from collections import OrderedDict
+from itertools import izip
+import cPickle
+import numpy
+from numpy import array, ones, ndarray
+
+import theano
+import theano.sparse as sparse
+
+from theano.compile.function_module import Function, FunctionMaker
+from theano.tensor.basic import TensorVariable
+from theano.compile import SharedVariable
+from theano.tensor.sharedvar import TensorSharedVariable, ScalarSharedVariable
+
+from theano import tensor as T
+from theano.ifelse import ifelse
+from theano import config
+
+floatX = config.floatX
+intX = 'int64'
+
+
+class Error(Exception):
+  """Base class for module specific Errors."""
+
+
+class PathError(Error):
+  """ Raised if expected files are not found."""
+
+
+class MissingInfoError(Error, ValueError):
+  """ Raised if the network is missing a key component."""
+
+
+class Model(object):
+  """ Implements safe serialization criterion for Theano graphs."""
+
+  def __init__(self):
+    self.inputs = []
+    self.outputs = []
+
+  def _is_serializable(self, obj):
+    return not (isinstance(obj, Function) or
+                isinstance(obj, TensorVariable) or
+                isinstance(obj, FunctionMaker))
+
+  def is_serializable(self, obj):
+    try:
+      return all(map(lambda x: self._is_serializable(x), obj))
+    except (TypeError, ValueError) as e:
+      return self._is_serializable(obj)
+
+  def serialized_value(self, obj):
+    try:
+      if any(map(lambda x: isinstance(x, TensorSharedVariable), obj)):
+        return []
+    except (TypeError, ValueError) as e:
+      if (isinstance(obj, TensorSharedVariable) or
+          isinstance(obj, ScalarSharedVariable)):
+        return obj.get_value()
+    return obj
+
+  def serialize_tensor_variable(self, var):
+    attrs = ["type", "name"]
+    return {k: var.__dict__[k] for k in attrs}
+
+  def __getstate__(self):
+    d = OrderedDict()
+    for name, obj in self.__dict__.iteritems():
+      if name == 'inputs' and obj:
+        obj = [self.serialize_tensor_variable(var) for var in obj]
+      if not self.is_serializable(obj):
+        continue
+      d[name] = self.serialized_value(obj)
+    if 'inputs' not in d:
+      raise MissingInfoError("Layer {} does not contain inputs".format(self))
+    return d
+
+  def __setstate__(self, d):
+    for i, (name, obj) in enumerate(d.iteritems()):
+      if name == 'inputs' and obj:
+        obj = [T.TensorVariable(**var) for var in obj]
+      if isinstance(obj, ndarray) or name=='lr':
+        self.__dict__[name] = theano.shared(value=obj, name=name+'_'+str(i))
+      else:
+        self.__dict__[name] = obj
+    try:
+      self.link(self.inputs)
+      self.build()
+    except Exception as e:
+      logging.warn("No graph was constructed for {} "
+                   "with error {}".format(self, e))
+
+  def link(self, inputs):
+    """ Defines the relation between inputs and the output of this layer.
+    Basically, this method constructs the graph of the computation on top of
+    the parameters that should be defined in __init__. This method will be
+    called after unpickling.
+    """
+    raise NotImplementedError
+
+  def build(self):
+    """ Builds the output function of this layer.
+    This will be called after unpickling the model.
+    """
+    self.forward_pass = theano.function(inputs=self.inputs,
+                                        outputs=self.outputs)
+
+
+class Layer(Model):
+  """ General abstraction for a neural network layer."""
+
+  def __init__(self, name):
+    super(Layer, self).__init__()
+    self.name = name
+    self._params = []
+    self.lr = theano.shared(value=numpy.cast[floatX](1.0), name='weights_lr_'+self.name)
+
+  def params(self):
+    """ Iterates over the parameters that have to be learned."""
+    return []
+
+  def update_lr(self, remaining):
+    if not self.params():
+      return
+    new_value = self.global_lr
+    if self.lr_decay == 'linear':
+      new_value = self.global_lr * remaining
+
+    if self.lr_method == 'fan_in':
+      new_value = new_value / self.fan_in
+      self.lr.set_value(new_value)
+    else:
+      self.lr.set_value(new_value)
+    logging.debug("Param {} 's learning rate is {:e}".format(self.name, new_value))
+
+  def set_learning_rate(self, lr, method='global', decay=''):
+    """Set layer global lr and update the local lr of the layers"""
+    self.lr_method = method
+    self.global_lr = lr
+    self.lr_decay = decay
+    self.update_lr(1.0)
+
+  def updates(self, cost):
+    """ Layer required updates for each training batch."""
+    learn_rate_val = numpy.asscalar(self.lr.get_value())
+    for param in self.params():
+      logging.debug("Param {} 's learning rate is {:e}".format(param.name,
+                    learn_rate_val))
+      if self.clipping:
+        grad_ = T.grad(cost=cost, wrt=param)
+        grad_norm = T.sum(grad_ * grad_) ** 0.5
+        scaled = grad_ * self.threshold/grad_norm
+        grad = ifelse(T.gt(grad_norm, self.threshold), scaled, grad_)
+        yield (param, param - self.lr * grad)
+      else:
+        yield (param, param - self.lr * T.grad(cost=cost, wrt=param))
+
+  def status(self):
+    for param in self.params():
+      min_value = param.min().eval()
+      max_value = param.max().eval()
+      avg_value = param.mean().eval()
+      stats = 'min:%f\taverage:%f\tmax:%f' % (min_value, avg_value, max_value)
+      yield (param, stats)
+
+
+class HiddenLayer(Layer):
+  """ A fully connected layer that holds parameters that have to be learned."""
+
+  def __init__(self, name='HiddenLayer', shape=(0, 0), w_values=None,
+               activation=T.tanh):
+
+    super(HiddenLayer, self).__init__(name)
+    self.activation = activation
+    if w_values is None:
+      input_dim, output_dim, = shape
+      w_values = random_value((input_dim, output_dim), floatX)
+    if activation == theano.tensor.nnet.sigmoid:
+       w_values *= 4
+
+    self.fan_in = w_values.shape[0]
+    self.clipping = False
+    self.threshold = 1e12
+    self.weights = theano.shared(value=w_values, name='weights_'+self.name)
+
+  def params(self):
+    yield self.weights
+
+  def size(self):
+    """ Returns the number of the parameters without considering the bias."""
+    return self.weights.size
+
+  def link(self, inputs):
+    """ Once the inputs are determined we constrct the output function.
+        output = inputs[0] * Weights
+    """
+    self.L1 = abs(self.weights).sum()
+    self.L2 = (self.weights ** 2).sum()
+
+    self.inputs = inputs
+    input = self.inputs[0]
+    self.linear_output = T.dot(input, self.weights)
+    self.nonlinear_output = self.activation(self.linear_output)
+    self.outputs = [self.nonlinear_output, self.linear_output]
+    return self.outputs
+
+
+class BiasedHiddenLayer(HiddenLayer):
+  """ Hidden layer without biased activations."""
+
+  def __init__(self, b_values=None, **kwargs):
+    super(BiasedHiddenLayer, self).__init__(**kwargs)
+
+    if b_values is None:
+      output_dim = self.weights.eval().shape[1]
+      b_values = zero_value((output_dim,), type=floatX)
+    self.bias = theano.shared(value=b_values, name='bias_'+self.name)
+
+  def params(self):
+    yield self.weights
+    yield self.bias
+
+  def link(self, inputs):
+    """ Once the inputs are determined we constrct the output function.
+        output = inputs[0] * Weights + bias
+    """
+    nonlinear_out, linear_out = super(BiasedHiddenLayer, self).link(inputs)
+    self.linear_output = linear_out + self.bias
+    self.nonlinear_output = self.activation(self.linear_output)
+    self.outputs = [self.nonlinear_output, self.linear_output]
+    return self.outputs
+
+
+class EmbeddingLayer(HiddenLayer):
+  """
+  EmbeddingsLayer is a layer where a lookup operation is performed.
+  Indices supplied as input replaced with their embedding representation.
+  This is done using Theano operators that support backpropagation.
+
+  The embeddings are stored in matrix 'Weights'.
+  """
+
+  def __init__(self, **kwargs):
+    super(EmbeddingLayer, self).__init__(**kwargs)
+    self.fan_in = 1.0
+
+  def link(self, inputs):
+    """ Input should be a matrix with the rows representing examples"""
+    self.inputs = inputs
+    input = self.inputs[0]
+    concatenated_input = input.flatten()
+    if theano.config.device == 'cpu':
+      indexed_rows = theano.sparse_grad(self.weights[concatenated_input])
+    else:
+      indexed_rows = self.weights[concatenated_input]
+    concatenated_rows = indexed_rows.flatten()
+    num_examples = input.shape[0]
+    width = concatenated_rows.size//num_examples
+    self.outputs = [concatenated_rows.reshape((num_examples, width))]
+    return self.outputs
+
+
+class LossLayer(Layer):
+  """ A layer without parameters."""
+
+  def params(self):
+    return []
+
+
+class HingeLayer(LossLayer):
+  """ Computes hinge loss of the correct and corrupted samples."""
+
+  def __init__(self, name='HingeLayer'):
+    super(HingeLayer, self).__init__(name=name)
+    self.alpha = 0.1
+
+  def link(self, inputs):
+    self.inputs = inputs
+    self.positive_score = self.inputs[0]
+    self.negative_score = self.inputs[1]
+
+    # Hinge loss
+    self.scores = (T.ones_like(self.positive_score) -
+                   self.positive_score + self.negative_score)
+    error = (self.scores * (self.scores > 0)).mean()
+
+    self.cost = error
+    self.outputs = [self.cost, error]
+    return self.outputs
+
+  def build(self):
+    self.forward_pass = theano.function(inputs=self.inputs,
+                                        outputs=self.outputs)
